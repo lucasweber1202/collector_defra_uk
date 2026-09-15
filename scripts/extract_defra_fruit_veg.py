@@ -310,6 +310,14 @@ def _parse_ods(
                 variety = _normalise_label(row[2][0])
                 quality = row[3][0].strip().lower()
                 raw_unit = row[4][0]
+                # Product names are often written only on the first-quality
+                # row and left blank on the following second/Ave rows. Update
+                # the carry-forward state before filtering quality, otherwise
+                # an Ave row can inherit the preceding product's name.
+                if item:
+                    previous_item = item
+                else:
+                    item = previous_item
                 # The modern file is an average-price panel. Historical first-
                 # and second-quality rows are separate measures, so only the
                 # published average (or ungraded single price) is stitched.
@@ -317,9 +325,9 @@ def _parse_ods(
                     continue
             if category not in COLLECTED_CATEGORIES:
                 continue
-            if item:
+            if modern_layout and item:
                 previous_item = item
-            else:
+            elif modern_layout:
                 item = previous_item
             variety = variety or item
             if not item or not variety:

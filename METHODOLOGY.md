@@ -49,5 +49,5 @@ level.
 The ODS and CSV overlap is checked cell by cell. Differences of at most one
 penny are accepted as published spreadsheet/CSV rounding and the CSV wins.
 Anything larger than `0.011` GBP is material and stops the run. On the source
-artifact verified on 15 September 2026, the combined panel contained 137 series
-and 23,787 observations from 9 January 2015 through 14 September 2026.
+artifact verified on 15 September 2026, the combined panel contained 127 series
+and 23,801 observations from 9 January 2015 through 14 September 2026.

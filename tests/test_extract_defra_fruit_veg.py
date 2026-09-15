@@ -56,11 +56,16 @@ def _mini_ods() -> bytes:
         date_row.addElement(_cell(reference_date.strftime("%-d/%-m/%y"), date_value=reference_date))
         table.addElement(date_row)
         table.addElement(TableRow())
+        if not modern:
+            first_quality_row = TableRow()
+            for value in ("Fruit", "Apples", "Gala", "1st", "£/kg", "1.50"):
+                first_quality_row.addElement(_cell(value))
+            table.addElement(first_quality_row)
         data_row = TableRow()
         values = (
             ("1", "Fruit", "Apples", "Gala", "kg", "1.43")
             if modern
-            else ("Fruit", "Apples", "Gala", quality, "£/kg", "1.43")
+            else ("Fruit", "", "Gala", quality, "£/kg", "1.43")
         )
         for value in values:
             data_row.addElement(_cell(value))
@@ -218,7 +223,7 @@ def test_too_few_reference_dates_is_refused() -> None:
 
 
 def test_a_shifted_first_observation_is_refused() -> None:
-    """The 2017-11-03 start is the signature of the full published file."""
+    """A shifted 2015 start means the official historical workbook was truncated."""
     panel = [
         Observation(row.series_id, row.reference_date + timedelta(days=7), row.value, "snap")
         for row in _panel(520)
