@@ -51,3 +51,53 @@ penny are accepted as published spreadsheet/CSV rounding and the CSV wins.
 Anything larger than `0.011` GBP is material and stops the run. On the source
 artifact verified on 15 September 2026, the combined panel contained 127 series
 and 23,801 observations from 9 January 2015 through 14 September 2026.
+
+## DEFRA banana prices
+
+One tidy CSV carries the whole weekly history from 13 January 1995 in GBP per
+kilogram. The two ODS workbooks on the same page restate the same figures, so
+parsing them would add a reconciliation failure mode without adding an
+observation; only the CSV is collected.
+
+DEFRA renamed its published aggregate rows at the 2018/2019 boundary. The
+`_bananas_bananas` spelling runs to 21 December 2018 and the plain spelling
+from 11 January 2019, with zero overlapping weeks, so this is a cosmetic
+relabelling of one economic series rather than two series. A *doubled* trailing
+`_bananas` token is collapsed; a single one is not, which keeps `eu_bananas`
+and `eu` distinct. Validation re-checks after normalisation that no two
+published origins collapsed onto one identifier.
+
+## DEFRA milk prices
+
+The `Prices_Monthly` sheet of the official ODS carries five published columns.
+Each is stored only where it is actually published, so the price series starts
+in January 1970 while composition and volume start in the mid-1990s.
+
+Reference months are canonicalised to the first of the month because DEFRA is
+not internally consistent: rows from January 2017 to December 2023 carry the
+month end and every other row the month start. Both denote the same monthly
+period. The canonicalisation is only safe while it stays one row per month, so
+validation asserts exactly that and fails on a duplicate.
+
+The price is stored in the published pence per litre. Converting it to pounds
+would be a transformation, so the published unit is recorded in the series name
+and description instead. The `Prices_Annual` sheet is DEFRA's own calendar-year
+aggregation of the same monthly figures and is not collected.
+
+## DEFRA agricultural price indices
+
+Only the current 2020 = 100 CSV (January 2014 onward) is collected. The page
+also carries archived workbooks on 2015 = 100 (from January 1988), 2010 = 100,
+2005 = 100 and 2000 = 100, which DEFRA states are "not updated monthly and
+presented for archive purposes only".
+
+Those bases are never spliced onto the current series. Chaining them requires a
+rebasing factor DEFRA does not publish, and a silent concatenation would make
+the stored level mean two different things either side of a join. The base year
+is therefore part of every identifier, so a future DEFRA rebasing appears as a
+new set of series beside the old one rather than redefining a stored history.
+Extending history across bases is a research-layer decision with an explicit
+documented method; no backcast is manufactured here.
+
+Both published index families (`output` and `input`) must be present, and
+validation fails if one disappears rather than silently halving the panel.

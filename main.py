@@ -20,7 +20,7 @@ from sqlalchemy.engine import Engine
 from scripts.availability import attribute_release, upsert_availability
 from scripts.config import LOG_LEVEL, missing_environment, unresolved_credentials
 from scripts.db import build_engine
-from scripts.extract import collect
+from scripts.extract import DATASETS, collect_one, open_client, resolve
 from scripts.init_db import init_db
 from scripts.metadata import upsert_metadata
 from scripts.run_logs import insert_run_log
@@ -52,8 +52,16 @@ def _setup_logging(level: str) -> io.StringIO:
 
 
 def _parse_args(argv: list[str] | None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Collect one UK inflation predictor source.")
+    parser = argparse.ArgumentParser(
+        description="Collect this publisher's UK inflation predictor data sets."
+    )
     parser.add_argument("--log-level", default=LOG_LEVEL)
+    parser.add_argument(
+        "--source-id",
+        action="append",
+        choices=sorted(DATASETS),
+        help="Collect only this data set; repeatable. Defaults to every data set.",
+    )
     return parser.parse_args(argv)
 
 
@@ -97,34 +105,60 @@ def _availability_rows(data: Any, result: WriteResult, collected_at: datetime) -
     return rows
 
 
-def collect_source(engine: Engine) -> None:
-    data = collect()
-    collected_at = datetime.now(UTC)
+def collect_source(engine: Engine, source_ids: list[str] | None = None) -> None:
+    """Collect and persist each selected data set in its own transaction.
+
+    One repository owns several data sets from the same publisher. They share
+    nothing but this persistence path, so a layout change at one DEFRA page
+    must not stop the others from updating: each is collected and committed
+    independently and the failures are re-raised together at the end.
+    """
+    selected = resolve(source_ids)
     if engine.dialect.name not in TRANSACTIONAL_DIALECTS:
         logger.warning(
             "%s commits statements independently; interrupted Databricks runs are repaired "
             "idempotently by the next run",
             engine.dialect.name,
         )
-    with engine.begin() as conn:
-        snapshots_written = upsert_snapshots(conn, data.snapshots)
-        result = upsert_time_series(conn, data.observations, collected_at)
-        availability_rows = _availability_rows(data, result, collected_at)
-        availability_written = upsert_availability(conn, availability_rows, collected_at)
-        metadata_inserted, metadata_updated = upsert_metadata(conn, data.catalog, collected_at)
-    logger.info(
-        "result: new_observations=%d new_vintages=%d availability=%d snapshots=%d "
-        "metadata_inserted=%d metadata_updated=%d",
-        result.new_observations,
-        result.new_vintages,
-        availability_written,
-        snapshots_written,
-        metadata_inserted,
-        metadata_updated,
-    )
+    failures: list[tuple[str, Exception]] = []
+    with open_client() as client:
+        for source_id in selected:
+            try:
+                data = collect_one(client, source_id)
+                collected_at = datetime.now(UTC)
+                with engine.begin() as conn:
+                    snapshots_written = upsert_snapshots(conn, data.snapshots)
+                    result = upsert_time_series(conn, data.observations, collected_at)
+                    availability_rows = _availability_rows(data, result, collected_at)
+                    availability_written = upsert_availability(
+                        conn, availability_rows, collected_at
+                    )
+                    metadata_inserted, metadata_updated = upsert_metadata(
+                        conn, data.catalog, collected_at
+                    )
+            except Exception as exc:
+                logger.exception("Data set %s failed", source_id)
+                failures.append((source_id, exc))
+                continue
+            logger.info(
+                "result %s: new_observations=%d new_vintages=%d availability=%d snapshots=%d "
+                "metadata_inserted=%d metadata_updated=%d",
+                source_id,
+                result.new_observations,
+                result.new_vintages,
+                availability_written,
+                snapshots_written,
+                metadata_inserted,
+                metadata_updated,
+            )
+    if failures:
+        names = ", ".join(source_id for source_id, _ in failures)
+        raise RuntimeError(
+            f"{len(failures)} of {len(selected)} DEFRA data set(s) failed: {names}"
+        ) from failures[0][1]
 
 
-def main() -> int:
+def main(source_ids: list[str] | None = None) -> int:
     missing = missing_environment()
     if missing:
         raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}")
@@ -133,7 +167,7 @@ def main() -> int:
     engine = build_engine()
     try:
         init_db(engine)
-        collect_source(engine)
+        collect_source(engine, source_ids)
     finally:
         engine.dispose()
     return 0
@@ -147,7 +181,7 @@ def run(argv: list[str] | None = None) -> int:
     traceback_text: str | None = None
     return_code = 0
     try:
-        return_code = main()
+        return_code = main(args.source_id)
     except Exception:
         status = "error"
         traceback_text = traceback.format_exc()

@@ -21,8 +21,11 @@ _TABLE = f"{SCHEMA_NAME}.{METADATA_TABLE}"
 BATCH_SIZE = 500
 
 # Fleet controlled vocabularies, narrowed to the values this repository emits.
-FREQUENCIES = frozenset({"weekly", "biweekly", "irregular"})
-UNITS = frozenset({"currency", "percent"})
+# `monthly` and `index` were added with the milk-price and agricultural
+# price-index data sets; `other` carries the milk volume series, whose published
+# unit (million litres) has no fleet spelling of its own.
+FREQUENCIES = frozenset({"weekly", "biweekly", "monthly", "irregular"})
+UNITS = frozenset({"currency", "percent", "index", "other"})
 ECO_GROUPS = frozenset({"consumer_prices", "producer_prices", "public_finance"})
 
 _COMPARABLE_COLUMNS = (
