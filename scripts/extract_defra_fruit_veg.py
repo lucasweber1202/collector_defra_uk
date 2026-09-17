@@ -284,9 +284,9 @@ def _parse_ods(
         if date_row_index is None:
             raise ValueError(f"DEFRA ODS sheet {sheet_name!r} has no 'Week ending' row")
         date_row = rows[date_row_index]
-        date_start = next(
-            index for index, (value, _) in enumerate(date_row) if value == "Week ending"
-        ) + 1
+        date_start = (
+            next(index for index, (value, _) in enumerate(date_row) if value == "Week ending") + 1
+        )
         reference_dates = [cell_date for _, cell_date in date_row[date_start:]]
         if not any(reference_dates):
             raise ValueError(f"DEFRA ODS sheet {sheet_name!r} has no machine-readable dates")
@@ -331,9 +331,7 @@ def _parse_ods(
                 item = previous_item
             variety = variety or item
             if not item or not variety:
-                raise ValueError(
-                    f"DEFRA ODS sheet {sheet_name!r} has an incomplete product label"
-                )
+                raise ValueError(f"DEFRA ODS sheet {sheet_name!r} has an incomplete product label")
             unit = _normalise_ods_unit(raw_unit)
             series_id = make_series_id(category, item, variety)
             descriptor = {
@@ -419,12 +417,9 @@ def _combine_artifacts(
     ]
     if material:
         raise ValueError(
-            "DEFRA ODS and CSV materially disagree in overlap; examples: "
-            f"{material[:5]}"
+            f"DEFRA ODS and CSV materially disagree in overlap; examples: {material[:5]}"
         )
-    penny_rounding = sum(
-        ods_by_key[key].value != csv_by_key[key].value for key in overlap
-    )
+    penny_rounding = sum(ods_by_key[key].value != csv_by_key[key].value for key in overlap)
     logger.info(
         "DEFRA overlap passed: %d identical/comparable cells, %d one-penny rounding differences",
         len(overlap),
