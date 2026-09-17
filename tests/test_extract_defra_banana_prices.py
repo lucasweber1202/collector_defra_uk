@@ -189,8 +189,7 @@ def test_a_history_gap_is_refused() -> None:
         for observation in observations
         if observation.reference_date
         not in {
-            EXPECTED_FIRST_OBSERVATION + timedelta(days=7 * step)
-            for step in range(1, removed + 1)
+            EXPECTED_FIRST_OBSERVATION + timedelta(days=7 * step) for step in range(1, removed + 1)
         }
     ]
     with pytest.raises(ValueError, match="cadence broken by gaps"):

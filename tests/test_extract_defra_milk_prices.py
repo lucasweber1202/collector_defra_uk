@@ -142,9 +142,7 @@ def test_a_missing_monthly_sheet_fails_loudly() -> None:
 
 def test_a_month_end_stamp_is_canonicalised_to_the_month_start() -> None:
     """DEFRA stamps 2017-01 to 2023-12 with month ends and the rest with starts."""
-    observations, _natives = parse_ods(
-        _ods([("2017-01-31T00:00:00", VALUES)]), "test://m", "snap"
-    )
+    observations, _natives = parse_ods(_ods([("2017-01-31T00:00:00", VALUES)]), "test://m", "snap")
     assert {o.reference_date for o in observations} == {date(2017, 1, 1)}
 
 
@@ -256,7 +254,11 @@ def test_an_implausible_value_is_refused_per_series(variable: str, value: float)
         value=value,
         snapshot_id="snapshot",
     )
-    kept = [o for o in observations if (o.series_id, o.reference_date) != (series_id, broken.reference_date)]
+    kept = [
+        o
+        for o in observations
+        if (o.series_id, o.reference_date) != (series_id, broken.reference_date)
+    ]
     with pytest.raises(ValueError, match="plausible"):
         validate([broken, *kept], natives)
 
