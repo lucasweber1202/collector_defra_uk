@@ -29,7 +29,6 @@ UNITS = frozenset({"currency", "percent", "index", "other"})
 ECO_GROUPS = frozenset({"consumer_prices", "producer_prices", "public_finance"})
 
 _COMPARABLE_COLUMNS = (
-    "source_id",
     "name",
     "description",
     "country",
@@ -143,7 +142,6 @@ def upsert_metadata(
         desired.append(
             {
                 "series_id": series_id,
-                "source_id": fields["source_id"],
                 "name": fields["name"],
                 "description": fields["description"],
                 "country": COUNTRY_CURRENCY,
