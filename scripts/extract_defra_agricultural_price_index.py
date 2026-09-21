@@ -203,9 +203,7 @@ def _build_catalog(
         side = "output" if index_type == "output" else "input"
         catalog[series_id] = {
             "source_id": SOURCE_ID,
-            "name": (
-                f"UK agricultural price index, {side}: {category} ({BASE_YEAR} = 100)"
-            ),
+            "name": (f"UK agricultural price index, {side}: {category} ({BASE_YEAR} = 100)"),
             "description": (
                 f"Monthly UK agricultural {side} price index for {category}, on a "
                 f"{BASE_YEAR} = 100 base, as published by the Department for Environment, "

@@ -146,9 +146,7 @@ def test_csv_wins_a_one_penny_overlap_after_validation() -> None:
     series_id = make_series_id("fruit", "apples", "gala")
     ods = [Observation(series_id, date(2026, 9, 14), 1.44, "ods")]
     csv_rows = [Observation(series_id, date(2026, 9, 14), 1.43, "csv")]
-    native = {
-        series_id: {"category": "fruit", "item": "apples", "variety": "gala", "unit": "kg"}
-    }
+    native = {series_id: {"category": "fruit", "item": "apples", "variety": "gala", "unit": "kg"}}
     combined, _ = _combine_artifacts(ods, native, csv_rows, native)
     assert combined == csv_rows
 
@@ -156,9 +154,7 @@ def test_csv_wins_a_one_penny_overlap_after_validation() -> None:
 def test_material_ods_csv_overlap_difference_fails() -> None:
     """A substantive disagreement cannot be hidden by deterministic deduplication."""
     series_id = make_series_id("fruit", "apples", "gala")
-    native = {
-        series_id: {"category": "fruit", "item": "apples", "variety": "gala", "unit": "kg"}
-    }
+    native = {series_id: {"category": "fruit", "item": "apples", "variety": "gala", "unit": "kg"}}
     ods = [Observation(series_id, date(2026, 9, 14), 1.50, "ods")]
     csv_rows = [Observation(series_id, date(2026, 9, 14), 1.43, "csv")]
     with pytest.raises(ValueError, match="materially disagree"):

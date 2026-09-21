@@ -53,9 +53,7 @@ from scripts.time_series import Observation
 logger = logging.getLogger(__name__)
 
 SOURCE_ID = "defra_milk_prices"
-PAGE_URL = (
-    "https://www.gov.uk/government/statistics/uk-milk-prices-and-composition-of-milk"
-)
+PAGE_URL = "https://www.gov.uk/government/statistics/uk-milk-prices-and-composition-of-milk"
 
 # The machine-readable attachment. Its published name carries the release date,
 # so only the stable stem is matched. The methodology PDF and ODT on the same
@@ -196,9 +194,7 @@ def parse_ods(
 ) -> tuple[list[Observation], dict[str, dict[str, str]]]:
     """Parse the monthly sheet into observations and their native labels."""
     document = load(io.BytesIO(body))
-    sheets = {
-        str(table.getAttribute("name")): table for table in document.getElementsByType(Table)
-    }
+    sheets = {str(table.getAttribute("name")): table for table in document.getElementsByType(Table)}
     if MONTHLY_SHEET not in sheets:
         raise ValueError(
             f"DEFRA milk workbook {url} has no {MONTHLY_SHEET} sheet; found "
