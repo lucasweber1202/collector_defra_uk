@@ -108,7 +108,7 @@ def make_series_id(index_type: str, category: str, base_year: int = BASE_YEAR) -
     return series_id
 
 
-def parse_series_id(series_id: str) -> tuple[str, str, str, str, int]:
+def describe_series_id(series_id: str) -> tuple[str, str, str, str, int]:
     """Decode ``DEFRA_API_{TYPE}_{CATEGORY}_B{BASE}`` into its five parts."""
     parts = series_id.split("_")
     if len(parts) != 5 or parts[0] != "DEFRA" or parts[1] != "API":
@@ -119,6 +119,19 @@ def parse_series_id(series_id: str) -> tuple[str, str, str, str, int]:
     if not re.fullmatch(r"B\d{4}", base):
         raise ValueError(f"DEFRA API series_id carries no base year: {series_id}")
     return source, dataset, index_type, category, int(base[1:])
+
+
+def parse_series_id(series_id: str) -> tuple[str, ...]:
+    """Split a canonical id into its raw underscore components.
+
+    This is the fleet contract (GUIDELINES.md 4): uppercase, underscore
+    separated, ordered coarse -> fine, and exactly reversible, so
+    build_series_id(*parse_series_id(sid)) == sid. The decoded view -- which
+    strips the base-year marker and types it as an int -- is
+    describe_series_id, which validates the same grammar.
+    """
+    describe_series_id(series_id)
+    return tuple(series_id.split("_"))
 
 
 def _assert_schema(fieldnames: Sequence[str] | None, url: str) -> None:
