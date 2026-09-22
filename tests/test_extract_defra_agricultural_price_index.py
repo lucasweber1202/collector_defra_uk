@@ -13,9 +13,9 @@ from scripts.extract_defra_agricultural_price_index import (
     MIN_EXPECTED_DATES,
     MIN_EXPECTED_SERIES,
     _build_catalog,
+    describe_series_id,
     make_series_id,
     parse_csv,
-    parse_series_id,
     validate,
 )
 from scripts.metadata import validate_catalog
@@ -119,7 +119,7 @@ def test_series_ids_round_trip() -> None:
         ("output", "wheat_breadmaking"),
     ]:
         series_id = make_series_id(index_type, category)
-        _source, _dataset, parsed_type, _category, base = parse_series_id(series_id)
+        _source, _dataset, parsed_type, _category, base = describe_series_id(series_id)
         assert parsed_type == index_type.upper()
         assert base == BASE_YEAR
 
@@ -130,7 +130,7 @@ def test_series_ids_round_trip() -> None:
 )
 def test_a_malformed_series_id_is_refused(series_id: str) -> None:
     with pytest.raises(ValueError):
-        parse_series_id(series_id)
+        describe_series_id(series_id)
 
 
 def test_validation_accepts_a_well_formed_panel() -> None:
